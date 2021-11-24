@@ -11,6 +11,8 @@ import {
   useLocation
 } from "remix";
 import type { LinksFunction } from "remix";
+import { CssBaseline, GeistProvider } from '@geist-ui/react'
+
 
 import deleteMeRemixStyles from "~/styles/demos/remix.css";
 import globalStylesUrl from "~/styles/global.css";
@@ -44,9 +46,11 @@ export let links: LinksFunction = () => {
 export default function App() {
   return (
     <Document>
-      <Layout>
-        <Outlet />
-      </Layout>
+      <GeistProvider>
+        <Layout>
+          <Outlet />
+        </Layout>
+      </GeistProvider>
     </Document>
   );
 }
@@ -58,12 +62,15 @@ function Document({
   children: React.ReactNode;
   title?: string;
 }) {
+  const styles = CssBaseline.flush()
+  console.log(styles)
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         {title ? <title>{title}</title> : null}
+        {styles}
         <Meta />
         <Links />
       </head>

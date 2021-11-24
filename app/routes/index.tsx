@@ -1,5 +1,7 @@
 import type { MetaFunction, LoaderFunction } from "remix";
 import { useLoaderData, json, Link } from "remix";
+import { useTheme } from '@geist-ui/react'
+
 
 type IndexData = {
   resources: Array<{ name: string; url: string }>;
@@ -57,10 +59,17 @@ export let meta: MetaFunction = () => {
 // https://remix.run/guides/routing#index-routes
 export default function Index() {
   let data = useLoaderData<IndexData>();
+  const theme = useTheme()
+  const tabbarFixed = false
+  const expanded = false
 
   return (
-    <div className="remix__page">
-      <main>
+    <div className="layout">
+      <aside className="sidebar">
+        aaaaaaaa
+      </aside>
+      <div className="side-shadow" />
+      <main className="main">
         <h2>Welcome to Remix!</h2>
         <p>We're stoked that you're here. 🥳</p>
         <p>
@@ -75,26 +84,73 @@ export default function Index() {
           folders when you're ready to turn this into your next project.
         </p>
       </main>
-      <aside>
-        <h2>Demos In This App</h2>
-        <ul>
-          {data.demos.map(demo => (
-            <li key={demo.to} className="remix__page__resource">
-              <Link to={demo.to} prefetch="intent">
-                {demo.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <h2>Resources</h2>
-        <ul>
-          {data.resources.map(resource => (
-            <li key={resource.url} className="remix__page__resource">
-              <a href={resource.url}>{resource.name}</a>
-            </li>
-          ))}
-        </ul>
-      </aside>
+      <style>{`
+          .layout {
+            min-height: calc(100vh - 108px);
+            max-width: ${theme.layout.pageWidthWithMargin};
+            margin: 0 auto;
+            padding: 0 ${theme.layout.gap};
+            display: flex;
+            box-sizing: border-box;
+          }
+          .sidebar {
+            width: 200px;
+            margin-right: 20px;
+            -webkit-overflow-scrolling: touch;
+            -webkit-flex-shrink: 0;
+            height: calc(100% - 2rem - 140px + ${tabbarFixed ? '60px' : 0});
+            position: fixed;
+            top: 140px;
+            bottom: 2rem;
+            transform: translateY(${tabbarFixed ? '-60px' : 0});
+            transition: transform 200ms ease-out;
+            z-index: 100;
+          }
+          .side-shadow {
+            width: 220px;
+            flex-shrink: 0;
+            height: 100vh;
+          }
+          .main {
+            display: flex;
+            max-width: calc(100% - 220px);
+            flex-direction: column;
+            padding-left: 20px;
+            padding-top: 25px;
+            flex: 0 0 100%;
+            padding-bottom: 150px;
+          }
+          @media only screen and (max-width: ${theme.layout.breakpointMobile}) {
+            .layout {
+              max-width: 100%;
+              width: 100%;
+              padding: 20px 1rem;
+            }
+            .sidebar {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              z-index: 10;
+              width: 100vw;
+              box-sizing: border-box;
+              height: ${expanded ? '100vh' : '0'};
+              background-color: ${theme.palette.background};
+              padding: var(--geist-page-nav-height) 0 0 0;
+              overflow: hidden;
+              transition: height 250ms ease;
+            }
+            .main {
+              width: 90vw;
+              max-width: 90vw;
+              padding: 0;
+            }
+            .side-shadow {
+              display: none;
+              visibility: hidden;
+            }
+          }
+        `}</style>
     </div>
   );
 }

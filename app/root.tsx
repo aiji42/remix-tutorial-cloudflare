@@ -2,15 +2,18 @@ import * as React from "react";
 import {
   Link,
   Links,
-  LiveReload,
+  LiveReload, LoaderFunction,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
-  useCatch,
+  useCatch, useLoaderData,
   useLocation
 } from "remix";
 import type { LinksFunction } from "remix";
+import { db } from '~/utils/db.server'
+import { Playlist } from '@prisma/client'
+import {VFC} from "react";
 
 /**
  * The `links` export is a function that returns an array of objects that map to
@@ -30,15 +33,27 @@ export let links: LinksFunction = () => {
   ];
 };
 
+export const loader: LoaderFunction = async () => {
+  const user = await db.user.findFirst({
+    select: {
+      name: true,
+      playlists: true
+    }
+  })
+
+  return { user }
+}
+
 /**
  * The root module's default export is a component that renders the current
  * route via the `<Outlet />` component. Think of this as the global layout
  * component for your app.
  */
 export default function App() {
+  const data = useLoaderData<{ user: {name: string, playlists: Playlist[]} | null }>();
   return (
     <Document>
-      <Layout>
+      <Layout playlists={data.user?.playlists ?? []}>
         <Outlet />
       </Layout>
     </Document>
@@ -72,12 +87,12 @@ function Document({
   );
 }
 
-function Layout({ children }: React.PropsWithChildren<{}>) {
+function Layout({ children, playlists }: React.PropsWithChildren<{ playlists: Playlist[] }>) {
   return (
     <div className="bg-black">
       <div className="flex flex-col h-screen text-sm text-gray-400">
         <div className="flex-1 flex overflow-y-hidden">
-          <SideBar />
+          <SideBar playlists={playlists} />
           <div className="bg-gray-800-spotify flex-1 flex flex-col">
             <TopBar />
             <div className="content-spotify overflow-y-auto" style={{ backgroundColor: '#181818' }}>
@@ -117,7 +132,7 @@ export function CatchBoundary() {
 
   return (
     <Document title={`${caught.status} ${caught.statusText}`}>
-      <Layout>
+      <Layout playlists={[]}>
         <h1>
           {caught.status}: {caught.statusText}
         </h1>
@@ -131,7 +146,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   console.error(error);
   return (
     <Document title="Error!">
-      <Layout>
+      <Layout playlists={[]}>
         <div>
           <h1>There was an error</h1>
           <p>{error.message}</p>
@@ -225,7 +240,7 @@ const RouteChangeAnnouncement = React.memo(() => {
   );
 });
 
-const SideBar = () => {
+const SideBar: VFC<{ playlists: Playlist[] }> = ({ playlists }) => {
   return (
     <div className="sidebar bg-gray-900-spotify w-48 flex-none flex flex-col justify-between font-semibold">
       <ul className="py-6">
@@ -233,17 +248,17 @@ const SideBar = () => {
           <svg viewBox="0 0 24 24" width="24" height="24"
                className="fill-current text-white group-hover:text-white h-6 w-6">
             <path
-              d="M13 20v-5h-2v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-7.59l-.3.3a1 1 0 11-1.4-1.42l9-9a1 1 0 011.4 0l9 9a1 1 0 01-1.4 1.42l-.3-.3V20a2 2 0 01-2 2h-3a2 2 0 01-2-2zm5 0v-9.59l-6-6-6 6V20h3v-5c0-1.1.9-2 2-2h2a2 2 0 012 2v5h3z"></path>
+              d="M13 20v-5h-2v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-7.59l-.3.3a1 1 0 11-1.4-1.42l9-9a1 1 0 011.4 0l9 9a1 1 0 01-1.4 1.42l-.3-.3V20a2 2 0 01-2 2h-3a2 2 0 01-2-2zm5 0v-9.59l-6-6-6 6V20h3v-5c0-1.1.9-2 2-2h2a2 2 0 012 2v5h3z" />
           </svg>
           <span className="ml-2 text-white group-hover:text-white">Home</span></a></li>
         <li className="border-l-4 border-transparent"><a href="#"
                                                          className="flex items-center hover:text-white mx-4 mt-4 group">
           <svg width="24" height="24" className="fill-current text-gray-400 h-6 w-6 group-hover:text-white">
-            <path fill="none" d="M15 5.414V7h1.586z"></path>
-            <path fill="none" d="M14 9a1 1 0 01-1-1V4H9v12h9V9h-4z"></path>
+            <path fill="none" d="M15 5.414V7h1.586z" />
+            <path fill="none" d="M14 9a1 1 0 01-1-1V4H9v12h9V9h-4z" />
             <path
-              d="M20 17V8h-.009a.996.996 0 00-.284-.707l-5-5A.99.99 0 0014 2.01V2H8a1 1 0 00-1 1v14a1 1 0 001 1h11a1 1 0 001-1zM15 5.414L16.586 7H15V5.414zM9 16V4h4v4a1 1 0 001 1h4v7H9z"></path>
-            <path d="M3 8v13a1 1 0 001 1h12v-2H5V8H3z"></path>
+              d="M20 17V8h-.009a.996.996 0 00-.284-.707l-5-5A.99.99 0 0014 2.01V2H8a1 1 0 00-1 1v14a1 1 0 001 1h11a1 1 0 001-1zM15 5.414L16.586 7H15V5.414zM9 16V4h4v4a1 1 0 001 1h4v7H9z" />
+            <path d="M3 8v13a1 1 0 001 1h12v-2H5V8H3z" />
           </svg>
           <span className="ml-2 group-hover:text-white">Browse</span></a></li>
         <li className="border-l-4 border-transparent"><a href="#"
@@ -252,11 +267,11 @@ const SideBar = () => {
             <g data-name="Layer 2">
               <g data-name="radio">
                 <path
-                  d="M12 8a3 3 0 00-1 5.83 1 1 0 000 .17v6a1 1 0 002 0v-6a1 1 0 000-.17A3 3 0 0012 8zm0 4a1 1 0 111-1 1 1 0 01-1 1zM3.5 11a6.87 6.87 0 012.64-5.23 1 1 0 10-1.28-1.54A8.84 8.84 0 001.5 11a8.84 8.84 0 003.36 6.77 1 1 0 101.28-1.54A6.87 6.87 0 013.5 11z"></path>
+                  d="M12 8a3 3 0 00-1 5.83 1 1 0 000 .17v6a1 1 0 002 0v-6a1 1 0 000-.17A3 3 0 0012 8zm0 4a1 1 0 111-1 1 1 0 01-1 1zM3.5 11a6.87 6.87 0 012.64-5.23 1 1 0 10-1.28-1.54A8.84 8.84 0 001.5 11a8.84 8.84 0 003.36 6.77 1 1 0 101.28-1.54A6.87 6.87 0 013.5 11z" />
                 <path
-                  d="M16.64 6.24a1 1 0 00-1.28 1.52A4.28 4.28 0 0117 11a4.28 4.28 0 01-1.64 3.24A1 1 0 0016 16a1 1 0 00.64-.24A6.2 6.2 0 0019 11a6.2 6.2 0 00-2.36-4.76zM8.76 6.36a1 1 0 00-1.4-.12A6.2 6.2 0 005 11a6.2 6.2 0 002.36 4.76 1 1 0 001.4-.12 1 1 0 00-.12-1.4A4.28 4.28 0 017 11a4.28 4.28 0 011.64-3.24 1 1 0 00.12-1.4z"></path>
+                  d="M16.64 6.24a1 1 0 00-1.28 1.52A4.28 4.28 0 0117 11a4.28 4.28 0 01-1.64 3.24A1 1 0 0016 16a1 1 0 00.64-.24A6.2 6.2 0 0019 11a6.2 6.2 0 00-2.36-4.76zM8.76 6.36a1 1 0 00-1.4-.12A6.2 6.2 0 005 11a6.2 6.2 0 002.36 4.76 1 1 0 001.4-.12 1 1 0 00-.12-1.4A4.28 4.28 0 017 11a4.28 4.28 0 011.64-3.24 1 1 0 00.12-1.4z" />
                 <path
-                  d="M19.14 4.23a1 1 0 10-1.28 1.54A6.87 6.87 0 0120.5 11a6.87 6.87 0 01-2.64 5.23 1 1 0 001.28 1.54A8.84 8.84 0 0022.5 11a8.84 8.84 0 00-3.36-6.77z"></path>
+                  d="M19.14 4.23a1 1 0 10-1.28 1.54A6.87 6.87 0 0120.5 11a6.87 6.87 0 01-2.64 5.23 1 1 0 001.28 1.54A8.84 8.84 0 0022.5 11a8.84 8.84 0 00-3.36-6.77z" />
               </g>
             </g>
           </svg>
@@ -274,21 +289,11 @@ const SideBar = () => {
         </ul>
         <h3 className="uppercase tracking-widest text-gray-500 font-normal text-xs mt-6">Playlists</h3>
         <ul className="leading-extra-loose mb-6">
-          <li className="truncate"><a href="#" className="hover:text-white">Acoustic Hits</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">Acoustic Covers</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">Discover Weekly</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">Hot Hits Canada</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">90's Hip-Hop Don't Stop Long Text</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">90s Smash Hits</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">TGIF</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">mint Canada</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">Hip-Hop Central</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">R&amp;B Right Now</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">I Love My '90s R&amp;B</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">Are &amp; Be</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">Today's Top Hits</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">Get Turnt</a></li>
-          <li className="truncate"><a href="#" className="hover:text-white">iTunes</a></li>
+          {playlists.map(({ id, name }) => (
+            <li className="truncate" key={id}>
+              <a href="#" className="hover:text-white">{name}</a>
+            </li>
+          ))}
         </ul>
       </div>
       <div className="border-t border-gray-800 h-16 px-4 py-2 flex items-center group">
@@ -296,7 +301,7 @@ const SideBar = () => {
              className="fill-current text-gray-600 w-8 h-8 group-hover:text-white">
           <path
             d="M12 22a10 10 0 110-20 10 10 0 010 20zm0-2a8 8 0 100-16 8 8 0 000 16zm1-9h2a1 1 0 010 2h-2v2a1 1 0 01-2 0v-2H9a1 1 0 010-2h2V9a1 1 0 012 0v2z"
-            className="heroicon-ui"></path>
+            className="heroicon-ui" />
         </svg>
         <a href="#" className="font-normal text-gray-500 ml-2 group-hover:text-white">New Playlist</a></div>
     </div>
@@ -310,14 +315,14 @@ const TopBar = () => {
         <button>
           <svg viewBox="0 0 24 24" width="24" height="24"
                className="fill-current text-gray-400 hover:text-white h-10 w-10">
-            <path d="M14.7 15.3a1 1 0 01-1.4 1.4l-4-4a1 1 0 010-1.4l4-4a1 1 0 011.4 1.4L11.42 12l3.3 3.3z"></path>
+            <path d="M14.7 15.3a1 1 0 01-1.4 1.4l-4-4a1 1 0 010-1.4l4-4a1 1 0 011.4 1.4L11.42 12l3.3 3.3z" />
           </svg>
         </button>
         <button className="ml-1">
           <svg viewBox="0 0 24 24" width="24" height="24"
                className="fill-current text-gray-400 hover:text-white h-10 w-10">
             <path d="M9.3 8.7a1 1 0 011.4-1.4l4 4a1 1 0 010 1.4l-4 4a1 1 0 01-1.4-1.4l3.29-3.3-3.3-3.3z"
-                  className="heroicon-ui"></path>
+                  className="heroicon-ui" />
           </svg>
         </button>
         <div className="ml-4 relative"><input placeholder="Search"

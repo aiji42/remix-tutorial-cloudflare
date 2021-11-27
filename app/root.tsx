@@ -15,6 +15,7 @@ import {
 import type { LinksFunction } from 'remix'
 import { db } from '~/utils/db.server'
 import { Playlist } from '@prisma/client'
+import { userPrefs } from '~/cookie'
 
 export let links: LinksFunction = () => {
   return [
@@ -31,9 +32,18 @@ export let links: LinksFunction = () => {
 
 type Data = {
   user: { name: string; playlists: Playlist[] }
+  isCaching: boolean
 }
 
-export const loader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async ({ request }) => {
+  const cookieHeader = request.headers.get('Cookie')
+  const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
+  if (cookie.cacheable) {
+    const cache = await MY_KV.get('index', 'json')
+    if (cache) console.log('cache hit')
+    if (cache) return { ...(cache as Data), isCaching: true }
+  }
+
   const user = await db.user.findFirst({
     select: {
       name: true,
@@ -43,7 +53,12 @@ export const loader: LoaderFunction = async () => {
 
   if (!user) throw new Response('Bad Request', { status: 401 })
 
-  return { user }
+  if (cookie.cacheable)
+    await MY_KV.put('index', JSON.stringify({ user }), {
+      expirationTtl: 60 ** 2 * 24
+    })
+
+  return { user, isCaching: !!cookie.cacheable }
 }
 
 export default function App() {
@@ -84,8 +99,15 @@ function Document({
 }
 
 function Layout({ children }: React.PropsWithChildren<{}>) {
+  const { isCaching } = useLoaderData<Data>()
+  const cacheableToggle = async () => {
+    document.cookie = await userPrefs.serialize({
+      cacheable: !isCaching
+    })
+    document.location.reload()
+  }
   return (
-    <div className="bg-black">
+    <div className="bg-black relative">
       <div className="flex flex-col h-screen text-sm text-gray-400">
         <div className="flex-1 flex overflow-y-hidden">
           <SideBar />
@@ -96,6 +118,12 @@ function Layout({ children }: React.PropsWithChildren<{}>) {
               style={{ backgroundColor: '#181818' }}
             >
               <div className="container mx-auto">{children}</div>
+              <button
+                onClick={cacheableToggle}
+                className="absolute bottom-0 right-0 m-8 rounded-full py-3 px-6 bg-purple-600 text-white"
+              >
+                {isCaching ? 'Caching' : 'Not Caching'}
+              </button>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import {
   timeFormattedString,
   timeFormattedStringShort
 } from '~/utils/fornatter'
+import { userPrefs } from '~/cookie'
 
 type Data = {
   data: {
@@ -19,8 +20,15 @@ type Data = {
   }
 }
 
-export const loader: LoaderFunction = async ({ params: { id } }) => {
+export const loader: LoaderFunction = async ({ request, params: { id } }) => {
   if (!id) throw new Response('Not Found', { status: 404 })
+
+  const cookieHeader = request.headers.get('Cookie')
+  const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
+  if (cookie.cacheable) {
+    const cache = await MY_KV.get(request.url, 'json')
+    if (cache) return cache
+  }
 
   const data = await db.album.findUnique({
     where: {
@@ -51,6 +59,11 @@ export const loader: LoaderFunction = async ({ params: { id } }) => {
   })
 
   if (!data) throw new Response('Not Found', { status: 404 })
+
+  if (cookie.cacheable)
+    await MY_KV.put(request.url, JSON.stringify({ data }), {
+      expirationTtl: 60 ** 2 * 24
+    })
 
   return { data }
 }

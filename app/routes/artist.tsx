@@ -1,12 +1,20 @@
 import type { MetaFunction, LoaderFunction } from 'remix'
 import { useLoaderData, Link } from 'remix'
 import { db } from '~/utils/db.server'
+import { userPrefs } from '~/cookie'
 
 type IndexData = {
   artists: { id: string; name: string; picture: string }[]
 }
 
-export let loader: LoaderFunction = async () => {
+export let loader: LoaderFunction = async ({ request }) => {
+  const cookieHeader = request.headers.get('Cookie')
+  const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
+  if (cookie.cacheable) {
+    const cache = await MY_KV.get(request.url, 'json')
+    if (cache) return cache
+  }
+
   const artists = await db.artist.findMany({
     select: {
       id: true,
@@ -14,6 +22,11 @@ export let loader: LoaderFunction = async () => {
       picture: true
     }
   })
+
+  if (cookie.cacheable)
+    await MY_KV.put(request.url, JSON.stringify({ artists }), {
+      expirationTtl: 60 ** 2 * 24
+    })
 
   return { artists }
 }

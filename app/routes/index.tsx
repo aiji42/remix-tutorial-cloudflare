@@ -5,7 +5,7 @@ import { db } from '~/utils/db.server'
 type IndexData = {
   artists: { id: string; name: string; picture: string }[]
   albums: { id: string; name: string; cover: string }[]
-  playlists: { id: string; name: string }[]
+  playlists: { id: string; name: string; cover: string }[]
 }
 
 export let loader: LoaderFunction = async () => {
@@ -31,7 +31,8 @@ export let loader: LoaderFunction = async () => {
     take: 10,
     select: {
       id: true,
-      name: true
+      name: true,
+      cover: true
     }
   })
 
@@ -47,7 +48,7 @@ export let meta: MetaFunction = () => {
 export default function Index() {
   const data = useLoaderData<IndexData>()
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto min-h-screen">
       <h2 className="mt-24 text-5xl font-semibold text-white">Home</h2>
       <div className="mt-12">
         <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
@@ -122,7 +123,7 @@ export default function Index() {
                 <Link to={`/playlist/${playlist.id}`}>
                   <img
                     loading="lazy"
-                    src="https://tailwind-v1-examples.netlify.app/albumcover06.jpg"
+                    src={playlist.cover}
                     width={250}
                     height={250}
                   />

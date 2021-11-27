@@ -79,4 +79,5 @@ model Playlist {
   name      String
   user      User?    @relation(fields: [userId], references: [id])
   songs     Song[]
+  cover     String
 }

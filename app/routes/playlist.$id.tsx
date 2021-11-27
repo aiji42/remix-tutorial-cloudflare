@@ -9,6 +9,7 @@ import {
 type Data = {
   data: {
     name: string
+    cover: string
     user: {
       name: string
     }
@@ -37,6 +38,7 @@ export const loader: LoaderFunction = async ({ params: { id } }) => {
     },
     select: {
       name: true,
+      cover: true,
       user: {
         select: {
           name: true
@@ -83,7 +85,9 @@ export default function Playlist() {
         <img
           loading="lazy"
           className="mr-6"
-          src="https://placekitten.com/g/200/200"
+          src={data.cover}
+          height={300}
+          width={300}
         />
         <div className="flex flex-col justify-center">
           <h4 className="mt-0 mb-2 uppercase text-gray-500 tracking-widest text-xs">

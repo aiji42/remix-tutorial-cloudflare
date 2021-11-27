@@ -105,7 +105,8 @@ async function main() {
               connect: shuffle(songs)
                 .slice(0, faker.datatype.number({ min: 10, max: 30 }))
                 .map(({ id }) => ({ id }))
-            }
+            },
+            cover: `https://picsum.photos/seed/${faker.random.word()}/500/500`
           }
         })
       )

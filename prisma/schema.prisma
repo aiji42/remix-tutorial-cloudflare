@@ -58,6 +58,7 @@ model Artist {
   name      String
   songs     Song[]
   albums    Album[]
+  picture   String
 }
 
 model Album {

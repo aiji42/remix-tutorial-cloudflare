@@ -1,6 +1,9 @@
-import type { MetaFunction, LoaderFunction } from 'remix'
-import { useLoaderData } from 'remix'
+import { useLoaderData, Link, MetaFunction, LoaderFunction } from 'remix'
 import { db } from '~/utils/db.server'
+import {
+  timeFormattedString,
+  timeFormattedStringShort
+} from '~/utils/fornatter'
 
 type Data = {
   data: {
@@ -16,11 +19,7 @@ type Data = {
   }
 }
 
-// Loaders provide data to components and are only ever called on the server, so
-// you can connect to a database or run any server side code you want right next
-// to the component that renders it.
-// https://remix.run/api/conventions#loader
-export let loader: LoaderFunction = async ({ params: { id } }) => {
+export const loader: LoaderFunction = async ({ params: { id } }) => {
   if (!id) throw new Response('Not Found', { status: 404 })
 
   const data = await db.album.findUnique({
@@ -56,31 +55,31 @@ export let loader: LoaderFunction = async ({ params: { id } }) => {
   return { data }
 }
 
-// https://remix.run/api/conventions#meta
-export let meta: MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return {
     title: 'Remix Starter',
     description: 'Welcome to remix!'
   }
 }
 
-// https://remix.run/guides/routing#index-routes
-export default function Index() {
+export default function Album() {
   const { data } = useLoaderData<Data>()
   return (
     <div className="text-gray-300 min-h-screen p-10">
       <div className="flex">
-        <img className="mr-6" src={data.cover} />
+        <img className="mr-6" src={data.cover} width={300} height={300} />
         <div className="flex flex-col justify-center">
           <h4 className="mt-0 mb-2 uppercase text-gray-500 tracking-widest text-xs">
-            Albam
+            Album
           </h4>
           <h1 className="mt-0 mb-2 text-white text-4xl">{data.name}</h1>
 
           <p className="text-gray-600 text-sm">
             Created by{' '}
             {data.artists.map(({ id, name }) => (
-              <a key={id}>{name}</a>
+              <Link to={`/artist/${id}`} key={id} className="hover:underline">
+                {name}
+              </Link>
             ))}{' '}
             - {data.songs.length} songs,{' '}
             {timeFormattedString(
@@ -141,16 +140,4 @@ export default function Index() {
       </div>
     </div>
   )
-}
-
-const timeFormattedString = (inSec: number) => {
-  const sec = ('0' + Math.ceil(inSec % 60)).slice(-2)
-  const min = ('0' + Math.ceil(inSec / 60)).slice(-2)
-  return `${min} min ${sec} sec`
-}
-
-const timeFormattedStringShort = (inSec: number) => {
-  const sec = ('0' + Math.ceil(inSec % 60)).slice(-2)
-  const min = ('0' + Math.ceil(inSec / 60)).slice(-2)
-  return `${min}:${sec}`
 }

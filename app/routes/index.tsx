@@ -1,52 +1,43 @@
 import type { MetaFunction, LoaderFunction } from 'remix'
-import { useLoaderData, json, Link } from 'remix'
+import { useLoaderData, Link } from 'remix'
+import { db } from '~/utils/db.server'
 
 type IndexData = {
-  resources: Array<{ name: string; url: string }>
-  demos: Array<{ name: string; to: string }>
+  artists: { id: string; name: string; picture: string }[]
+  albums: { id: string; name: string; cover: string }[]
+  playlists: { id: string; name: string }[]
 }
 
-// Loaders provide data to components and are only ever called on the server, so
-// you can connect to a database or run any server side code you want right next
-// to the component that renders it.
-// https://remix.run/api/conventions#loader
-export let loader: LoaderFunction = () => {
-  let data: IndexData = {
-    resources: [
-      {
-        name: 'Remix Docs',
-        url: 'https://remix.run/docs'
-      },
-      {
-        name: 'React Router Docs',
-        url: 'https://reactrouter.com/docs'
-      },
-      {
-        name: 'Remix Discord',
-        url: 'https://discord.gg/VBePs6d'
-      }
-    ],
-    demos: [
-      {
-        to: 'demos/actions',
-        name: 'Actions'
-      },
-      {
-        to: 'demos/about',
-        name: 'Nested Routes, CSS loading/unloading'
-      },
-      {
-        to: 'demos/params',
-        name: 'URL Params and Error Boundaries'
-      }
-    ]
-  }
+export let loader: LoaderFunction = async () => {
+  const artists = await db.artist.findMany({
+    take: 5,
+    select: {
+      id: true,
+      name: true,
+      picture: true
+    }
+  })
 
-  // https://remix.run/api/remix#json
-  return json(data)
+  const albums = await db.album.findMany({
+    take: 5,
+    select: {
+      id: true,
+      name: true,
+      cover: true
+    }
+  })
+
+  const playlists = await db.playlist.findMany({
+    take: 10,
+    select: {
+      id: true,
+      name: true
+    }
+  })
+
+  return { artists, albums, playlists }
 }
 
-// https://remix.run/api/conventions#meta
 export let meta: MetaFunction = () => {
   return {
     title: 'Remix Starter',
@@ -54,394 +45,92 @@ export let meta: MetaFunction = () => {
   }
 }
 
-// https://remix.run/guides/routing#index-routes
 export default function Index() {
+  const data = useLoaderData<IndexData>()
   return (
-    <>
-      <div className="container mx-auto">
-        <h2 className="mt-24 text-5xl font-semibold text-white">Home</h2>
-        <div className="mt-12">
-          <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
-            Recently Played
-          </h3>
-          <div className="flex items-center mt-4 -mx-4">
-            <div className="w-1/5 px-4">
+    <div className="container mx-auto">
+      <h2 className="mt-24 text-5xl font-semibold text-white">Home</h2>
+      <div className="mt-12">
+        <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
+          Featured Artists
+        </h3>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
+          {data.artists.map((artist) => (
+            <div className="p-4" key={artist.id}>
               <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover02.jpg"
-                    alt="album cover"
-                  />
-                </a>
+                <Link to={`/artist/${artist.id}`}>
+                  <img src={artist.picture} width={250} height={250} />
+                </Link>
               </div>
+
               <div>
-                <a
-                  href="#"
+                <Link
+                  to={`/artist/${artist.id}`}
                   className="font-semibold block hover:text-white mt-2"
                 >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
+                  {artist.name}
+                </Link>
               </div>
             </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover03.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Christmas
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover04.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover05.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover06.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-12">
-          <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
-            Your Heavy Rotation
-          </h3>
-          <div className="flex items-center mt-4 -mx-4">
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover06.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover05.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover04.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover03.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover02.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-12 mb-12">
-          <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
-            Chill
-          </h3>
-          <div className="flex items-center mt-4 -mx-4">
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover02.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover03.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover04.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover05.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-            <div className="w-1/5 px-4">
-              <div>
-                <a href="#">
-                  <img
-                    src="https://tailwind-v1-examples.netlify.app/albumcover06.jpg"
-                    alt="album cover"
-                  />
-                </a>
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  Acoustic Pop Covers 2019
-                </a>
-                <div className="text-gray-500 mt-2">
-                  Amazing Acoustic Covers updated every week.
-                </div>
-                <div className="uppercase tracking-widest text-xs text-gray-500 mt-2">
-                  6679 Followers
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-    </>
+
+      <div className="mt-12">
+        <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
+          New Albums
+        </h3>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
+          {data.albums.map((album) => (
+            <div className="p-4" key={album.id}>
+              <div>
+                <Link to={`/album/${album.id}`}>
+                  <img src={album.cover} width={250} height={250} />
+                </Link>
+              </div>
+
+              <div>
+                <Link
+                  to={`/album/${album.id}`}
+                  className="font-semibold block hover:text-white mt-2"
+                >
+                  {album.name}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-12">
+        <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
+          Featured Playlists
+        </h3>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
+          {data.playlists.map((playlist) => (
+            <div className="px-4 py-8" key={playlist.id}>
+              <div>
+                <Link to={`/playlist/${playlist.id}`}>
+                  <img
+                    src="https://tailwind-v1-examples.netlify.app/albumcover06.jpg"
+                    width={250}
+                    height={250}
+                  />
+                </Link>
+              </div>
+
+              <div>
+                <Link
+                  to={`/playlist/${playlist.id}`}
+                  className="font-semibold block hover:text-white mt-2"
+                >
+                  {playlist.name}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }

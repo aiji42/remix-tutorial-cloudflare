@@ -94,26 +94,11 @@ export default function Album() {
           <button className="mr-2 bg-green-500 text-green-100 block py-2 px-8 rounded-full">
             Play
           </button>
-          <button className="mr-2 border border-white block p-2 rounded-full">
-            <img
-              src="https://image.flaticon.com/icons/svg/2485/2485986.svg"
-              height="25"
-              width="25"
-            />
-          </button>
-          <button className="mr-2 border border-white block p-2 rounded-full">
-            ...
-          </button>
-        </div>
-        <div className="text-gray-600 text-sm tracking-widest text-right">
-          <h5 className="mb-1">Followers</h5>
-          <p>5,055</p>
         </div>
       </div>
 
       <div className="mt-10">
         <div className="flex text-gray-600">
-          <div className="p-2 w-8 flex-shrink-0" />
           <div className="p-2 w-8 flex-shrink-0" />
           <div className="p-2 w-full">Title</div>
           <div className="p-2 w-full">Played</div>
@@ -125,7 +110,6 @@ export default function Album() {
             className="flex border-b border-gray-800 hover:bg-gray-800"
           >
             <div className="p-3 w-8 flex-shrink-0">▶️</div>
-            <div className="p-3 w-8 flex-shrink-0">❤️</div>
             <div className="p-3 w-full">{song.name}</div>
             <div className="p-3 w-full">
               {song.interactions

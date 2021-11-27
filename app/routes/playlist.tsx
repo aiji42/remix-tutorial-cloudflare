@@ -37,7 +37,7 @@ export let meta: MetaFunction = () => {
 export default function Index() {
   const data = useLoaderData<IndexData>()
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto min-h-screen">
       <h2 className="mt-24 text-5xl font-semibold text-white">Playlists</h2>
       <div className="mt-12">
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">

@@ -14,9 +14,9 @@ const userIds = Array.from({
 async function main() {
   // Create artists
   await prisma.artist.createMany({
-    data: Array.from({ length: NUMBER_OF_ARTISTS }).map(() => ({
+    data: Array.from({ length: NUMBER_OF_ARTISTS }).map((_, index) => ({
       name: faker.name.firstName(),
-      picture: `https://picsum.photos/seed/${faker.random.word()}/500/500`
+      picture: `/artist-${index}.jpg`
     }))
   })
 

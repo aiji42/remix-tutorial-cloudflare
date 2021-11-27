@@ -40,8 +40,7 @@ export let loader: LoaderFunction = async () => {
 
 export let meta: MetaFunction = () => {
   return {
-    title: 'Remix Starter',
-    description: 'Welcome to remix!'
+    title: 'Home | Remix Sample'
   }
 }
 
@@ -59,7 +58,12 @@ export default function Index() {
             <div className="p-4" key={artist.id}>
               <div>
                 <Link to={`/artist/${artist.id}`}>
-                  <img src={artist.picture} width={250} height={250} />
+                  <img
+                    loading="lazy"
+                    src={artist.picture}
+                    width={250}
+                    height={250}
+                  />
                 </Link>
               </div>
 
@@ -85,7 +89,12 @@ export default function Index() {
             <div className="p-4" key={album.id}>
               <div>
                 <Link to={`/album/${album.id}`}>
-                  <img src={album.cover} width={250} height={250} />
+                  <img
+                    loading="lazy"
+                    src={album.cover}
+                    width={250}
+                    height={250}
+                  />
                 </Link>
               </div>
 
@@ -112,6 +121,7 @@ export default function Index() {
               <div>
                 <Link to={`/playlist/${playlist.id}`}>
                   <img
+                    loading="lazy"
                     src="https://tailwind-v1-examples.netlify.app/albumcover06.jpg"
                     width={250}
                     height={250}

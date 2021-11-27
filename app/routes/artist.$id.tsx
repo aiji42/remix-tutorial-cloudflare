@@ -61,10 +61,9 @@ export const loader: LoaderFunction = async ({ params: { id } }) => {
   return { data }
 }
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = ({ data }) => {
   return {
-    title: 'Remix Starter',
-    description: 'Welcome to remix!'
+    title: `${data.data.name} | Artists | Remix Sample`
   }
 }
 

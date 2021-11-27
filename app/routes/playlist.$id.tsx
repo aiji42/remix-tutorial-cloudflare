@@ -69,10 +69,9 @@ export const loader: LoaderFunction = async ({ params: { id } }) => {
   return { data }
 }
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = ({ data }) => {
   return {
-    title: 'Remix Starter',
-    description: 'Welcome to remix!'
+    title: `${data.data.name} | Playlists | Remix Sample`
   }
 }
 
@@ -81,7 +80,11 @@ export default function Playlist() {
   return (
     <div className="text-gray-300 min-h-screen p-10">
       <div className="flex">
-        <img className="mr-6" src="https://placekitten.com/g/200/200" />
+        <img
+          loading="lazy"
+          className="mr-6"
+          src="https://placekitten.com/g/200/200"
+        />
         <div className="flex flex-col justify-center">
           <h4 className="mt-0 mb-2 uppercase text-gray-500 tracking-widest text-xs">
             Playlist

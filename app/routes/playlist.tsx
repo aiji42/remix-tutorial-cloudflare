@@ -24,8 +24,7 @@ export let loader: LoaderFunction = async () => {
 
 export let meta: MetaFunction = () => {
   return {
-    title: 'Remix Starter',
-    description: 'Welcome to remix!'
+    title: 'Playlists | Remix Sample'
   }
 }
 

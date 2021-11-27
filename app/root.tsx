@@ -29,6 +29,10 @@ export let links: LinksFunction = () => {
   ]
 }
 
+type Data = {
+  user: { name: string; playlists: Playlist[] }
+}
+
 export const loader: LoaderFunction = async () => {
   const user = await db.user.findFirst({
     select: {
@@ -88,7 +92,7 @@ function Layout({ children }: React.PropsWithChildren<{}>) {
           <div className="bg-gray-800-spotify flex-1 flex flex-col">
             <TopBar />
             <div
-              className="content-spotify overflow-y-auto"
+              className="content-spotify overflow-y-auto px-4"
               style={{ backgroundColor: '#181818' }}
             >
               <div className="container mx-auto">{children}</div>
@@ -207,8 +211,7 @@ const RouteChangeAnnouncement = React.memo(() => {
 })
 
 const SideBar: VFC = () => {
-  const { user } =
-    useLoaderData<{ user: { name: string; playlists: Playlist[] } }>()
+  const { user } = useLoaderData<Data>()
   return (
     <div className="sidebar bg-gray-900-spotify w-48 flex-none flex flex-col font-semibold">
       <ul className="py-6">
@@ -308,6 +311,7 @@ const SideBar: VFC = () => {
 }
 
 const TopBar = () => {
+  const { user } = useLoaderData<Data>()
   return (
     <div className="top-bar flex items-center justify-between px-4 py-2">
       <div className="flex items-center">
@@ -364,7 +368,7 @@ const TopBar = () => {
           </svg>
         </button>
         <a href="#" className="ml-2 hover:underline hover:text-white">
-          dredrehimself
+          {user.name}
         </a>
         <button className="ml-4">
           <svg

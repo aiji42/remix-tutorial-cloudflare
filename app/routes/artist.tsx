@@ -20,8 +20,7 @@ export let loader: LoaderFunction = async () => {
 
 export let meta: MetaFunction = () => {
   return {
-    title: 'Remix Starter',
-    description: 'Welcome to remix!'
+    title: 'Artists | Remix Sample'
   }
 }
 
@@ -37,7 +36,12 @@ export default function Index() {
               <div className="px-4 py-8" key={artist.id}>
                 <div>
                   <Link to={`/artist/${artist.id}`}>
-                    <img src={artist.picture} width={250} height={250} />
+                    <img
+                      loading="lazy"
+                      src={artist.picture}
+                      width={250}
+                      height={250}
+                    />
                   </Link>
                 </div>
 

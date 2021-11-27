@@ -1,4 +1,4 @@
-const alias = require('esbuild-plugin-alias');
+const alias = require('esbuild-plugin-alias')
 
 const isProd = process.env.NODE_ENV === 'production'
 
@@ -10,12 +10,13 @@ require('esbuild')
     minify: isProd,
     outdir: 'dist',
     define: {
-      "process.env.NODE_ENV": `"${process.env.NODE_ENV ?? 'development'}"`,
+      'process.env.NODE_ENV': `"${process.env.NODE_ENV ?? 'development'}"`,
+      'process.env.DATABASE_URL': `"${process.env.DATABASE_URL}"`
     },
     plugins: [
       alias({
-        '@prisma/client': require.resolve('@prisma/client'),
-      }),
-    ],
+        '@prisma/client': require.resolve('@prisma/client')
+      })
+    ]
   })
-  .catch(() => process.exit(1));
+  .catch(() => process.exit(1))

@@ -16,7 +16,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get(request.url, 'json')
+    const cache = await MY_KV.get(`playlist`, 'json')
     if (cache) return cache
   }
 
@@ -34,7 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   })
 
   if (cookie.cacheable)
-    await MY_KV.put(request.url, JSON.stringify({ playlists }), {
+    await MY_KV.put('playlist', JSON.stringify({ playlists }), {
       expirationTtl: 60 ** 2 * 24
     })
 

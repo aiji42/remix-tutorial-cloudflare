@@ -26,7 +26,7 @@ export const loader: LoaderFunction = async ({ request, params: { id } }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get(request.url, 'json')
+    const cache = await MY_KV.get(`album_${id}`, 'json')
     if (cache) return cache
   }
 
@@ -61,7 +61,7 @@ export const loader: LoaderFunction = async ({ request, params: { id } }) => {
   if (!data) throw new Response('Not Found', { status: 404 })
 
   if (cookie.cacheable)
-    await MY_KV.put(request.url, JSON.stringify({ data }), {
+    await MY_KV.put(`album_${id}`, JSON.stringify({ data }), {
       expirationTtl: 60 ** 2 * 24
     })
 

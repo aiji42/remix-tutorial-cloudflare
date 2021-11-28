@@ -37,7 +37,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get('index', 'json')
+    const cache = await MY_KV.get('root', 'json')
     if (cache) console.log('cache hit')
     if (cache) return { ...(cache as Data), isCaching: true }
   }
@@ -52,7 +52,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (!user) throw new Response('Bad Request', { status: 401 })
 
   if (cookie.cacheable)
-    await MY_KV.put('index', JSON.stringify({ user }), {
+    await MY_KV.put('root', JSON.stringify({ user }), {
       expirationTtl: 60 ** 2 * 24
     })
 

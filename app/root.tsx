@@ -16,6 +16,7 @@ import type { LinksFunction } from 'remix'
 import { db } from '~/utils/db.server'
 import { Playlist } from '@prisma/client'
 import { userPrefs } from '~/cookie'
+import styles from './tailwind.css'
 
 export let links: LinksFunction = () => {
   return [
@@ -23,10 +24,7 @@ export let links: LinksFunction = () => {
       rel: 'stylesheet',
       href: 'https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600'
     },
-    {
-      href: 'https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css',
-      rel: 'stylesheet'
-    }
+    { rel: 'stylesheet', href: styles }
   ]
 }
 

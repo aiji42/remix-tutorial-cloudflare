@@ -4,6 +4,7 @@ node_modules
 /build
 /dist
 /public/build
+/app/tailwind.css
 
 .mf
 .idea

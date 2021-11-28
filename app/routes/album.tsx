@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunction } from 'remix'
-import { useLoaderData, Link, json } from 'remix'
+import { useLoaderData, Link } from 'remix'
 import { db } from '~/utils/db.server'
 import { userPrefs } from '~/cookie'
 
@@ -28,17 +28,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       expirationTtl: 60 ** 2 * 24
     })
 
-  return json(
-    { albums },
-    {
-      headers: {
-        'Set-Cookie': await userPrefs.serialize({
-          ...cookie,
-          cacheable: true
-        })
-      }
-    }
-  )
+  return { albums }
 }
 
 export let meta: MetaFunction = () => {

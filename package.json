@@ -4,7 +4,7 @@
   "description": "",
   "license": "",
   "scripts": {
-    "build": "build:css && remix build",
+    "build": "npm run build:css && remix build",
     "dev": "concurrently \"npm run dev:css\" \"remix watch\"",
     "postinstall": "remix setup cloudflare-workers",
     "build:worker": "NODE_ENV=production node worker.build.js",

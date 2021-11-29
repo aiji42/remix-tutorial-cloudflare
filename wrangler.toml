@@ -1,10 +1,11 @@
 name = "remix-cloudflare-workers"
-type = "javascript"
+type = "webpack"
 
 zone_id = ""
 account_id = ""
 route = ""
 workers_dev = true
+webpack_config = "webpack.config.js"
 
 kv_namespaces = [{ binding = "MY_KV", id = "3679ef366be04cb7bb5b224ec8b625ac" }]
 
@@ -13,7 +14,6 @@ bucket = "./public"
 entry-point = "."
 
 [build]
-command = "npm run build:worker"
 watch_dir = "build/index.js"
 
 [build.upload]

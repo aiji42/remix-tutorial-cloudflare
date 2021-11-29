@@ -1,18 +1,20 @@
 import type { MetaFunction, LoaderFunction } from 'remix'
 import { Link, useLoaderData } from 'remix'
-import { db } from '~/utils/db.server'
 import { timeFormattedStringShort } from '~/utils/fornatter'
 import { userPrefs } from '~/cookie'
+import { supabase } from '~/utils/supabase.server'
 
 type Data = {
   data: {
     name: string
     picture: string
-    albums: { id: string; name: string; cover: string; createdAt: string }[]
-    songs: {
+    _AlbumToArtist: {
+      Album: { id: string; name: string; cover: string; createdAt: string }
+    }[]
+    Song: {
       id: string
       name: string
-      interactions: { playCount: number }[]
+      Interaction: { playCount: number }[]
       length: number
     }[]
   }
@@ -24,54 +26,26 @@ export const loader: LoaderFunction = async ({ request, params: { id } }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get(`artist_${id}`, 'json')
+    const cache = await MY_KV.get(`artist_${id}_v2`, 'json')
     if (cache) return cache
   }
 
-  const data = await db.artist.findUnique({
-    where: {
-      id
-    },
-    select: {
-      name: true,
-      picture: true,
-      albums: {
-        select: {
-          id: true,
-          name: true,
-          cover: true,
-          createdAt: true
-        }
-      },
-      songs: {
-        take: 5,
-        orderBy: {
-          interactions: {
-            _count: 'desc'
-          }
-        },
-        select: {
-          id: true,
-          name: true,
-          length: true,
-          interactions: {
-            select: {
-              playCount: true
-            }
-          }
-        }
-      }
-    }
-  })
+  const { data } = await supabase()
+    .from('Artist')
+    .select(
+      'name, picture, Song (id, name, length, Interaction (playCount)), _AlbumToArtist (Album (id, name, cover, createdAt))'
+    )
+    .match({ id })
+    .limit(1)
 
-  if (!data) throw new Response('Not Found', { status: 404 })
+  if (!data || !data[0]) throw new Response('Not Found', { status: 404 })
 
   if (cookie.cacheable)
-    await MY_KV.put(`artist_${id}`, JSON.stringify({ data }), {
+    await MY_KV.put(`artist_${id}_v2`, JSON.stringify({ data: data[0] }), {
       expirationTtl: 60 ** 2 * 24
     })
 
-  return { data }
+  return { data: data[0] }
 }
 
 export const meta: MetaFunction = ({ data }) => {
@@ -113,7 +87,7 @@ export default function Artist() {
           <div className="p-2 w-full">Played</div>
           <div className="p-2 w-12 flex-shrink-0 text-right">⏱</div>
         </div>
-        {data.songs.map((song) => (
+        {data.Song.slice(0, 5).map((song) => (
           <div
             key={song.id}
             className="flex border-b border-gray-800 hover:bg-gray-800"
@@ -121,9 +95,10 @@ export default function Artist() {
             <div className="p-3 w-8 flex-shrink-0">▶️</div>
             <div className="p-3 w-full">{song.name}</div>
             <div className="p-3 w-full">
-              {song.interactions
-                .reduce((res, { playCount }) => res + playCount, 0)
-                .toLocaleString()}
+              {song.Interaction.reduce(
+                (res, { playCount }) => res + playCount,
+                0
+              ).toLocaleString()}
             </div>
             <div className="p-3 w-12 flex-shrink-0 text-right">
               {timeFormattedStringShort(song.length)}
@@ -137,7 +112,7 @@ export default function Artist() {
           Albums
         </h3>
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-          {data.albums.map((album) => (
+          {data._AlbumToArtist.map(({ Album: album }) => (
             <div className="p-4" key={album.id}>
               <div>
                 <Link to={`/album/${album.id}`}>

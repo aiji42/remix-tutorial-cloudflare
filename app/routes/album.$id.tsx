@@ -1,21 +1,23 @@
 import { useLoaderData, Link, MetaFunction, LoaderFunction } from 'remix'
-import { db } from '~/utils/db.server'
 import {
   timeFormattedString,
   timeFormattedStringShort
 } from '~/utils/fornatter'
 import { userPrefs } from '~/cookie'
+import { supabase } from '~/utils/supabase.server'
 
 type Data = {
   data: {
     name: string
     cover: string
-    artists: { id: string; name: string }[]
-    songs: {
+    _AlbumToArtist: {
+      Artist: { id: string; name: string }
+    }[]
+    Song: {
       id: string
       name: string
       length: number
-      interactions: { playCount: number }[]
+      Interaction: { playCount: number }[]
     }[]
   }
 }
@@ -26,46 +28,26 @@ export const loader: LoaderFunction = async ({ request, params: { id } }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get(`album_${id}`, 'json')
+    const cache = await MY_KV.get(`album_${id}_v2`, 'json')
     if (cache) return cache
   }
 
-  const data = await db.album.findUnique({
-    where: {
-      id
-    },
-    select: {
-      name: true,
-      artists: {
-        select: {
-          id: true,
-          name: true
-        }
-      },
-      cover: true,
-      songs: {
-        select: {
-          id: true,
-          name: true,
-          length: true,
-          interactions: {
-            select: {
-              playCount: true
-            }
-          }
-        }
-      }
-    }
-  })
+  const { data } = await supabase()
+    .from('Album')
+    .select(
+      'name, cover, Song (id, name, length, Interaction (playCount)), _AlbumToArtist (Artist (id, name)))'
+    )
+    .match({ id })
+    .limit(1)
 
-  if (!data) throw new Response('Not Found', { status: 404 })
+  if (!data || !data[0]) throw new Response('Not Found', { status: 404 })
 
   if (cookie.cacheable)
-    await MY_KV.put(`album_${id}`, JSON.stringify({ data }), {
+    await MY_KV.put(`album_${id}_v2`, JSON.stringify({ data: data[0] }), {
       expirationTtl: 60 ** 2 * 24
     })
 
-  return { data }
+  return { data: data[0] }
 }
 
 export const meta: MetaFunction = ({ data }) => {
@@ -88,14 +70,14 @@ export default function Album() {
 
           <p className="text-gray-600 text-sm">
             Created by{' '}
-            {data.artists.map(({ id, name }) => (
+            {data._AlbumToArtist.map(({ Artist: { id, name } }) => (
               <Link to={`/artist/${id}`} key={id} className="hover:underline">
                 {name}
               </Link>
             ))}{' '}
-            - {data.songs.length} songs,{' '}
+            - {data.Song.length} songs,{' '}
             {timeFormattedString(
-              data.songs.reduce((res, { length }) => res + length, 0)
+              data.Song.reduce((res, { length }) => res + length, 0)
             )}
           </p>
         </div>
@@ -116,7 +98,7 @@ export default function Album() {
           <div className="p-2 w-full">Played</div>
           <div className="p-2 w-12 flex-shrink-0 text-right">⏱</div>
         </div>
-        {data.songs.map((song) => (
+        {data.Song.map((song) => (
           <div
             key={song.id}
             className="flex border-b border-gray-800 hover:bg-gray-800"
@@ -124,9 +106,10 @@ export default function Album() {
             <div className="p-3 w-8 flex-shrink-0">▶️</div>
             <div className="p-3 w-full">{song.name}</div>
             <div className="p-3 w-full">
-              {song.interactions
-                .reduce((res, { playCount }) => res + playCount, 0)
-                .toLocaleString()}
+              {song.Interaction.reduce(
+                (res, { playCount }) => res + playCount,
+                0
+              ).toLocaleString()}
             </div>
             <div className="p-3 w-12 flex-shrink-0 text-right">
               {timeFormattedStringShort(song.length)}

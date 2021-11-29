@@ -13,10 +13,9 @@ import {
   useLocation
 } from 'remix'
 import type { LinksFunction } from 'remix'
-import { db } from '~/utils/db.server'
-import { Playlist } from '@prisma/client'
 import { userPrefs } from '~/cookie'
-import styles from './tailwind.css'
+import styles from '~/tailwind.css'
+import { supabase } from '~/utils/supabase.server'
 
 export let links: LinksFunction = () => {
   return [
@@ -29,7 +28,7 @@ export let links: LinksFunction = () => {
 }
 
 type Data = {
-  user: { name: string; playlists: Playlist[] }
+  user: { name: string; Playlist: { id: string; name: string }[] }
   isCaching: boolean
 }
 
@@ -37,22 +36,21 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get('root', 'json')
+    const cache = await MY_KV.get('root_v2', 'json')
     if (cache) console.log('cache hit')
     if (cache) return { ...(cache as Data), isCaching: true }
   }
 
-  const user = await db.user.findFirst({
-    select: {
-      name: true,
-      playlists: true
-    }
-  })
+  const { data } = await supabase()
+    .from('User')
+    .select('name, Playlist (id, name)')
+    .limit(1)
 
-  if (!user) throw new Response('Bad Request', { status: 401 })
+  if (!data || !data[0]) throw new Response('Bad Request', { status: 401 })
+  const [user] = data
 
   if (cookie.cacheable)
-    await MY_KV.put('root', JSON.stringify({ user }), {
+    await MY_KV.put('root_v2', JSON.stringify({ user }), {
       expirationTtl: 60 ** 2 * 24
     })
 
@@ -323,7 +321,7 @@ const SideBar: VFC = () => {
           Playlists
         </h3>
         <ul className="leading-extra-loose mb-6">
-          {user.playlists.map(({ id, name }) => (
+          {user.Playlist.map(({ id, name }) => (
             <li className="truncate" key={id}>
               <Link to={`/playlist/${id}`} className="hover:text-white">
                 {name}

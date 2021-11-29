@@ -1,14 +1,14 @@
 import type { MetaFunction, LoaderFunction } from 'remix'
 import { useLoaderData, Link } from 'remix'
-import { db } from '~/utils/db.server'
 import { userPrefs } from '~/cookie'
+import { supabase } from '~/utils/supabase.server'
 
 type IndexData = {
   playlists: {
     id: string
     name: string
     cover: string
-    user: { name: string } | null
+    User: { name: string }
   }[]
 }
 
@@ -16,25 +16,16 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get(`playlist`, 'json')
+    const cache = await MY_KV.get(`playlist_v2`, 'json')
     if (cache) return cache
   }
 
-  const playlists = await db.playlist.findMany({
-    select: {
-      id: true,
-      name: true,
-      cover: true,
-      user: {
-        select: {
-          name: true
-        }
-      }
-    }
-  })
+  const { data: playlists } = await supabase()
+    .from('Playlist')
+    .select('id, name, cover, User (name)')
 
   if (cookie.cacheable)
-    await MY_KV.put('playlist', JSON.stringify({ playlists }), {
+    await MY_KV.put('playlist_v2', JSON.stringify({ playlists }), {
       expirationTtl: 60 ** 2 * 24
     })
 
@@ -74,7 +65,7 @@ export default function Index() {
                 >
                   {playlist.name}
                 </Link>
-                <div>Created by {playlist.user?.name}</div>
+                <div>Created by {playlist.User.name}</div>
               </div>
             </div>
           ))}

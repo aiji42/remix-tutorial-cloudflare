@@ -17,20 +17,24 @@ export let loader: LoaderFunction = async ({ request }) => {
     if (cache) return cache
   }
 
-  const { data: artists } = await supabase()
+  const artistPromise = supabase()
     .from('Artist')
     .select('id, name, picture')
     .limit(5)
 
-  const { data: albums } = await supabase()
+  const albumsPromise = supabase()
     .from('Album')
     .select('id, name, cover')
     .limit(5)
 
-  const { data: playlists } = await supabase()
-    .from('Album')
+  const playlistsPromise = supabase()
+    .from('Playlist')
     .select('id, name, cover')
     .limit(10)
+
+  const { data: artists } = await artistPromise
+  const { data: albums } = await albumsPromise
+  const { data: playlists } = await playlistsPromise
 
   if (cookie.cacheable)
     await MY_KV.put('home_v2', JSON.stringify({ artists, albums, playlists }), {

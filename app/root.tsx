@@ -41,13 +41,13 @@ export const loader: LoaderFunction = async ({ request }) => {
     if (cache) return { ...(cache as Data), isCaching: true }
   }
 
-  const { data } = await supabase()
+  const { data: user } = await supabase()
     .from('User')
     .select('name, Playlist (id, name)')
     .limit(1)
+    .single()
 
-  if (!data || !data[0]) throw new Response('Bad Request', { status: 401 })
-  const [user] = data
+  if (!user) throw new Response('Bad Request', { status: 401 })
 
   if (cookie.cacheable)
     await MY_KV.put('root_v2', JSON.stringify({ user }), {
@@ -131,6 +131,9 @@ function Layout({ children }: React.PropsWithChildren<{}>) {
 export function CatchBoundary() {
   let caught = useCatch()
 
+  console.error(caught.status)
+  console.error(caught.data)
+
   let message
   switch (caught.status) {
     case 401:
@@ -153,31 +156,29 @@ export function CatchBoundary() {
 
   return (
     <Document title={`${caught.status} ${caught.statusText}`}>
-      <Layout>
-        <h1>
-          {caught.status}: {caught.statusText}
-        </h1>
-        {message}
-      </Layout>
+      <h1>
+        {caught.status}: {caught.statusText}
+      </h1>
+      {message}
     </Document>
   )
 }
 
 export function ErrorBoundary({ error }: { error: Error }) {
-  console.error(error)
+  console.error(error.stack)
+  console.error(error.message)
+  console.error(error.name)
   return (
     <Document title="Error!">
-      <Layout>
-        <div>
-          <h1>There was an error</h1>
-          <p>{error.message}</p>
-          <hr />
-          <p>
-            Hey, developer, you should replace this with what you want your
-            users to see.
-          </p>
-        </div>
-      </Layout>
+      <div>
+        <h1>There was an error</h1>
+        <p>{error.message}</p>
+        <hr />
+        <p>
+          Hey, developer, you should replace this with what you want your users
+          to see.
+        </p>
+      </div>
     </Document>
   )
 }

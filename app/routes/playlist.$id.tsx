@@ -49,15 +49,16 @@ export const loader: LoaderFunction = async ({ request, params: { id } }) => {
     )
     .match({ id })
     .limit(1)
+    .single()
 
-  if (!data || !data[0]) throw new Response('Not Found', { status: 404 })
+  if (!data) throw new Response('Not Found', { status: 404 })
 
   if (cookie.cacheable)
-    await MY_KV.put(`playlist_${id}_v2`, JSON.stringify({ data: data[0] }), {
+    await MY_KV.put(`playlist_${id}_v2`, JSON.stringify({ data }), {
       expirationTtl: 60 ** 2 * 24
     })
 
-  return { data: data[0] }
+  return { data }
 }
 
 export const meta: MetaFunction = ({ data }) => {

@@ -1,30 +1,32 @@
 import type { MetaFunction, LoaderFunction } from 'remix'
 import { Link, useLoaderData } from 'remix'
-import { db } from '~/utils/db.server'
 import {
   timeFormattedString,
   timeFormattedStringShort
 } from '~/utils/fornatter'
 import { userPrefs } from '~/cookie'
+import { supabase } from '~/utils/supabase.server'
 
 type Data = {
   data: {
     name: string
     cover: string
-    user: {
+    User: {
       name: string
     }
-    songs: {
-      id: string
-      name: string
-      length: number
-      album: {
+    _PlaylistToSong: {
+      Song: {
         id: string
         name: string
-      } | null
-      artist: {
-        id: string
-        name: string
+        length: number
+        Album?: {
+          id: string
+          name: string
+        } | null
+        Artist: {
+          id: string
+          name: string
+        }
       }
     }[]
   }
@@ -36,48 +38,23 @@ export const loader: LoaderFunction = async ({ request, params: { id } }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get(`playlist_${id}`, 'json')
+    const cache = await MY_KV.get(`playlist_${id}_v2`, 'json')
     if (cache) return cache
   }
 
-  const data = await db.playlist.findUnique({
-    where: {
-      id
-    },
-    select: {
-      name: true,
-      cover: true,
-      user: {
-        select: {
-          name: true
-        }
-      },
-      songs: {
-        select: {
-          id: true,
-          name: true,
-          length: true,
-          album: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-          artist: {
-            select: {
-              id: true,
-              name: true
-            }
-          }
-        }
-      }
-    }
-  })
+  const { data } = await supabase()
+    .from('Playlist')
+    .select(
+      'name, cover, User (name), _PlaylistToSong (Song (id, name, length, Album (id, name), Artist (id, name))))'
+    )
+    .match({ id })
+    .limit(1)
+    .single()
 
   if (!data) throw new Response('Not Found', { status: 404 })
 
   if (cookie.cacheable)
-    await MY_KV.put(`playlist_${id}`, JSON.stringify({ data }), {
+    await MY_KV.put(`playlist_${id}_v2`, JSON.stringify({ data }), {
       expirationTtl: 60 ** 2 * 24
     })
 
@@ -109,9 +86,13 @@ export default function Playlist() {
           <h1 className="mt-0 mb-2 text-white text-4xl">{data.name}</h1>
 
           <p className="text-gray-600 text-sm">
-            Created by <a>{data.user.name}</a> - {data.songs.length} songs,{' '}
+            Created by <a>{data.User.name}</a> - {data._PlaylistToSong.length}{' '}
+            songs,{' '}
             {timeFormattedString(
-              data.songs.reduce((res, { length }) => res + length, 0)
+              data._PlaylistToSong.reduce(
+                (res, { Song: { length } }) => res + length,
+                0
+              )
             )}
           </p>
         </div>
@@ -133,7 +114,7 @@ export default function Playlist() {
           <div className="p-2 w-full">Album</div>
           <div className="p-2 w-12 flex-shrink-0 text-right">⏱</div>
         </div>
-        {data.songs.map((song) => (
+        {data._PlaylistToSong.map(({ Song: song }) => (
           <div
             key={song.id}
             className="flex border-b border-gray-800 hover:bg-gray-800"
@@ -142,15 +123,15 @@ export default function Playlist() {
             <div className="p-3 w-full">{song.name}</div>
             <div className="p-3 w-full">
               <Link
-                to={`/artist/${song.artist.id}`}
+                to={`/artist/${song.Artist.id}`}
                 className="hover:underline"
               >
-                {song.artist.name}
+                {song.Artist.name}
               </Link>
             </div>
             <div className="p-3 w-full">
-              <Link to={`/album/${song.album?.id}`} className="hover:underline">
-                {song.album?.name}
+              <Link to={`/album/${song.Album?.id}`} className="hover:underline">
+                {song.Album?.name}
               </Link>
             </div>
             <div className="p-3 w-12 flex-shrink-0 text-right">

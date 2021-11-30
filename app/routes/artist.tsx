@@ -1,7 +1,7 @@
 import type { MetaFunction, LoaderFunction } from 'remix'
 import { useLoaderData, Link } from 'remix'
-import { db } from '~/utils/db.server'
 import { userPrefs } from '~/cookie'
+import { supabase } from '~/utils/supabase.server'
 
 type IndexData = {
   artists: { id: string; name: string; picture: string }[]
@@ -11,20 +11,16 @@ export let loader: LoaderFunction = async ({ request }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get(`artist`, 'json')
+    const cache = await MY_KV.get(`artist_v2`, 'json')
     if (cache) return cache
   }
 
-  const artists = await db.artist.findMany({
-    select: {
-      id: true,
-      name: true,
-      picture: true
-    }
-  })
+  const { data: artists } = await supabase()
+    .from('Artist')
+    .select('id, name, picture')
 
   if (cookie.cacheable)
-    await MY_KV.put(`artist`, JSON.stringify({ artists }), {
+    await MY_KV.put(`artist_v2`, JSON.stringify({ artists }), {
       expirationTtl: 60 ** 2 * 24
     })
 

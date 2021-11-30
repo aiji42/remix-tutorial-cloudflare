@@ -13,10 +13,9 @@ import {
   useLocation
 } from 'remix'
 import type { LinksFunction } from 'remix'
-import { db } from '~/utils/db.server'
-import { Playlist } from '@prisma/client'
 import { userPrefs } from '~/cookie'
-import styles from './tailwind.css'
+import styles from '~/tailwind.css'
+import { supabase } from '~/utils/supabase.server'
 
 export let links: LinksFunction = () => {
   return [
@@ -29,7 +28,7 @@ export let links: LinksFunction = () => {
 }
 
 type Data = {
-  user: { name: string; playlists: Playlist[] }
+  user: { name: string; Playlist: { id: string; name: string }[] }
   isCaching: boolean
 }
 
@@ -37,22 +36,21 @@ export const loader: LoaderFunction = async ({ request }) => {
   const cookieHeader = request.headers.get('Cookie')
   const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
   if (cookie.cacheable) {
-    const cache = await MY_KV.get('root', 'json')
+    const cache = await MY_KV.get('root_v2', 'json')
     if (cache) console.log('cache hit')
     if (cache) return { ...(cache as Data), isCaching: true }
   }
 
-  const user = await db.user.findFirst({
-    select: {
-      name: true,
-      playlists: true
-    }
-  })
+  const { data: user } = await supabase()
+    .from('User')
+    .select('name, Playlist (id, name)')
+    .limit(1)
+    .single()
 
   if (!user) throw new Response('Bad Request', { status: 401 })
 
   if (cookie.cacheable)
-    await MY_KV.put('root', JSON.stringify({ user }), {
+    await MY_KV.put('root_v2', JSON.stringify({ user }), {
       expirationTtl: 60 ** 2 * 24
     })
 
@@ -133,6 +131,9 @@ function Layout({ children }: React.PropsWithChildren<{}>) {
 export function CatchBoundary() {
   let caught = useCatch()
 
+  console.error(caught.status)
+  console.error(caught.data)
+
   let message
   switch (caught.status) {
     case 401:
@@ -155,31 +156,29 @@ export function CatchBoundary() {
 
   return (
     <Document title={`${caught.status} ${caught.statusText}`}>
-      <Layout>
-        <h1>
-          {caught.status}: {caught.statusText}
-        </h1>
-        {message}
-      </Layout>
+      <h1>
+        {caught.status}: {caught.statusText}
+      </h1>
+      {message}
     </Document>
   )
 }
 
 export function ErrorBoundary({ error }: { error: Error }) {
-  console.error(error)
+  console.error(error.stack)
+  console.error(error.message)
+  console.error(error.name)
   return (
     <Document title="Error!">
-      <Layout>
-        <div>
-          <h1>There was an error</h1>
-          <p>{error.message}</p>
-          <hr />
-          <p>
-            Hey, developer, you should replace this with what you want your
-            users to see.
-          </p>
-        </div>
-      </Layout>
+      <div>
+        <h1>There was an error</h1>
+        <p>{error.message}</p>
+        <hr />
+        <p>
+          Hey, developer, you should replace this with what you want your users
+          to see.
+        </p>
+      </div>
     </Document>
   )
 }
@@ -323,7 +322,7 @@ const SideBar: VFC = () => {
           Playlists
         </h3>
         <ul className="leading-extra-loose mb-6">
-          {user.playlists.map(({ id, name }) => (
+          {user.Playlist.map(({ id, name }) => (
             <li className="truncate" key={id}>
               <Link to={`/playlist/${id}`} className="hover:text-white">
                 {name}

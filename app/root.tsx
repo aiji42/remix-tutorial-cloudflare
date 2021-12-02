@@ -16,6 +16,7 @@ import type { LinksFunction } from 'remix'
 import { userPrefs } from '~/cookie'
 import styles from '~/tailwind.css'
 import { supabase } from '~/utils/supabase.server'
+import { useLogin } from '~/utils/use-handle-auth'
 
 export let links: LinksFunction = () => {
   return [
@@ -54,7 +55,14 @@ export const loader: LoaderFunction = async ({ request }) => {
       expirationTtl: 60 ** 2 * 24
     })
 
-  return { user, isCaching: !!cookie.cacheable }
+  return {
+    user,
+    isCaching: !!cookie.cacheable,
+    ENV: {
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_API_KEY: process.env.SUPABASE_API_KEY
+    }
+  }
 }
 
 export default function App() {
@@ -74,6 +82,8 @@ function Document({
   children: React.ReactNode
   title?: string
 }) {
+  const data = useLoaderData()
+  useLogin()
   return (
     <html lang="en">
       <head>
@@ -88,6 +98,11 @@ function Document({
         <RouteChangeAnnouncement />
         <ScrollRestoration />
         <Scripts />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(data.ENV ?? {})}`
+          }}
+        />
         {process.env.NODE_ENV === 'development' && <LiveReload />}
       </body>
     </html>

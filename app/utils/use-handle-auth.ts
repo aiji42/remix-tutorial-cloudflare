@@ -12,6 +12,9 @@ export const useLogin = () => {
   }, [fetcher.submit])
 
   useEffect(() => {
-    if (fetcher.type === 'actionReload') location.hash = ''
+    if (fetcher.type === 'actionReload') {
+      location.hash = ''
+      location.reload()
+    }
   }, [fetcher])
 }

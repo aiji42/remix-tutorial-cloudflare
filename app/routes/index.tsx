@@ -1,152 +1,72 @@
-import type { MetaFunction, LoaderFunction } from 'remix'
-import { useLoaderData, Link } from 'remix'
-import { userPrefs } from '~/cookie'
+import { LoaderFunction, redirect, useLoaderData } from 'remix'
+import { supabaseUser } from '~/cookie'
 import { supabase } from '~/utils/supabase.server'
+import { VFC } from 'react'
+import { User } from '@supabase/supabase-js'
 
-type IndexData = {
-  artists: { id: string; name: string; picture: string }[]
-  albums: { id: string; name: string; cover: string }[]
-  playlists: { id: string; name: string; cover: string }[]
+type Data = {
+  googleUrl: string
 }
 
-export let loader: LoaderFunction = async ({ request }) => {
-  const cookieHeader = request.headers.get('Cookie')
-  const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
-  if (cookie.cacheable) {
-    const cache = await MY_KV.get('home_v2', 'json')
-    if (cache) return cache
-  }
-
-  const artistPromise = supabase()
-    .from('Artist')
-    .select('id, name, picture')
-    .limit(5)
-
-  const albumsPromise = supabase()
-    .from('Album')
-    .select('id, name, cover')
-    .limit(5)
-
-  const playlistsPromise = supabase()
-    .from('Playlist')
-    .select('id, name, cover')
-    .limit(10)
-
-  const { data: artists } = await artistPromise
-  const { data: albums } = await albumsPromise
-  const { data: playlists } = await playlistsPromise
-
-  if (cookie.cacheable)
-    await MY_KV.put('home_v2', JSON.stringify({ artists, albums, playlists }), {
-      expirationTtl: 60 ** 2 * 24
-    })
-
-  return { artists, albums, playlists }
+export const loader: LoaderFunction = () => {
+  return { googleUrl: supabase().auth.api.getUrlForProvider('google', {}) }
 }
 
-export let meta: MetaFunction = () => {
-  return {
-    title: 'Home | Remix Sample'
-  }
-}
-
-export default function Index() {
-  const data = useLoaderData<IndexData>()
+const Signin: VFC = () => {
+  const { googleUrl } = useLoaderData<Data>()
   return (
-    <div className="container mx-auto min-h-screen">
-      <h2 className="mt-24 text-5xl font-semibold text-white">Home</h2>
-      <div className="mt-12">
-        <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
-          Featured Artists
+    <div
+      className="flex items-center justify-center min-h-screen"
+      style={{ backgroundColor: '#181818' }}
+    >
+      <div className="px-8 py-6 mt-4 text-left bg-black shadow-lg text-white">
+        <h3 className="text-2xl font-bold text-center block">
+          Login to your account
         </h3>
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
-          {data.artists.map((artist) => (
-            <div className="p-4" key={artist.id}>
-              <div>
-                <Link to={`/artist/${artist.id}`}>
-                  <img
-                    loading="lazy"
-                    src={artist.picture}
-                    width={250}
-                    height={250}
-                  />
-                </Link>
-              </div>
+        <a href={googleUrl} className="mt-2 mb-8 block">
+          <button className="w-full h-10 px-6 text-indigo-100 transition-colors duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800">
+            Google
+          </button>
+        </a>
 
-              <div>
-                <Link
-                  to={`/artist/${artist.id}`}
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  {artist.name}
-                </Link>
-              </div>
+        <form action="">
+          <div className="mt-4">
+            <div>
+              <label className="block" htmlFor="email">
+                Email
+              </label>
+              <input
+                readOnly
+                type="text"
+                placeholder="Email"
+                className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+              />
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-12">
-        <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
-          New Albums
-        </h3>
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
-          {data.albums.map((album) => (
-            <div className="p-4" key={album.id}>
-              <div>
-                <Link to={`/album/${album.id}`}>
-                  <img
-                    loading="lazy"
-                    src={album.cover}
-                    width={250}
-                    height={250}
-                  />
-                </Link>
-              </div>
-
-              <div>
-                <Link
-                  to={`/album/${album.id}`}
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  {album.name}
-                </Link>
-              </div>
+            <div className="mt-4">
+              <label className="block">Password</label>
+              <input
+                readOnly
+                type="password"
+                placeholder="Password"
+                className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+              />
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-12">
-        <h3 className="font-semibold text-xl border-b border-gray-900 pb-2">
-          Featured Playlists
-        </h3>
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
-          {data.playlists.map((playlist) => (
-            <div className="px-4 py-8" key={playlist.id}>
-              <div>
-                <Link to={`/playlist/${playlist.id}`}>
-                  <img
-                    loading="lazy"
-                    src={playlist.cover}
-                    width={250}
-                    height={250}
-                  />
-                </Link>
-              </div>
-
-              <div>
-                <Link
-                  to={`/playlist/${playlist.id}`}
-                  className="font-semibold block hover:text-white mt-2"
-                >
-                  {playlist.name}
-                </Link>
-              </div>
+            <div className="flex items-baseline justify-between">
+              <button
+                disabled
+                className="px-6 py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-900"
+              >
+                Login
+              </button>
+              <a href="#" className="text-sm text-blue-600 hover:underline">
+                Forgot password?
+              </a>
             </div>
-          ))}
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   )
 }
+
+export default Signin

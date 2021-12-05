@@ -123,14 +123,17 @@ export default function Playlist() {
             <div className="p-3 w-full">{song.name}</div>
             <div className="p-3 w-full">
               <Link
-                to={`/artist/${song.Artist.id}`}
+                to={`/main/artist/${song.Artist.id}`}
                 className="hover:underline"
               >
                 {song.Artist.name}
               </Link>
             </div>
             <div className="p-3 w-full">
-              <Link to={`/album/${song.Album?.id}`} className="hover:underline">
+              <Link
+                to={`/main/album/${song.Album?.id}`}
+                className="hover:underline"
+              >
                 {song.Album?.name}
               </Link>
             </div>

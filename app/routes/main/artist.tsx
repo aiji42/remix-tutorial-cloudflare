@@ -44,7 +44,7 @@ export default function Index() {
             {data.artists.map((artist) => (
               <div className="px-4 py-8" key={artist.id}>
                 <div>
-                  <Link to={`/artist/${artist.id}`}>
+                  <Link to={`/main/artist/${artist.id}`}>
                     <img
                       loading="lazy"
                       src={artist.picture}
@@ -56,7 +56,7 @@ export default function Index() {
 
                 <div>
                   <Link
-                    to={`/artist/${artist.id}`}
+                    to={`/main/artist/${artist.id}`}
                     className="font-semibold block hover:text-white mt-2"
                   >
                     {artist.name}

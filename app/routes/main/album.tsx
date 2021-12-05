@@ -43,7 +43,7 @@ export default function Index() {
           {data.albums.map((album) => (
             <div className="px-4 py-8" key={album.id}>
               <div>
-                <Link to={`/album/${album.id}`}>
+                <Link to={`/main/album/${album.id}`}>
                   <img
                     loading="lazy"
                     src={album.cover}
@@ -55,7 +55,7 @@ export default function Index() {
 
               <div>
                 <Link
-                  to={`/album/${album.id}`}
+                  to={`/main/album/${album.id}`}
                   className="font-semibold block hover:text-white mt-2"
                 >
                   {album.name}

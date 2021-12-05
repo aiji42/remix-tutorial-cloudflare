@@ -48,7 +48,7 @@ export default function Index() {
           {data.playlists.map((playlist) => (
             <div className="px-4 py-8" key={playlist.id}>
               <div>
-                <Link to={`/playlist/${playlist.id}`}>
+                <Link to={`/main/playlist/${playlist.id}`}>
                   <img
                     loading="lazy"
                     src={playlist.cover}
@@ -60,7 +60,7 @@ export default function Index() {
 
               <div>
                 <Link
-                  to={`/playlist/${playlist.id}`}
+                  to={`/main/playlist/${playlist.id}`}
                   className="font-semibold block hover:text-white mt-2"
                 >
                   {playlist.name}

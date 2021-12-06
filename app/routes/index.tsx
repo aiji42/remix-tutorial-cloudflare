@@ -1,8 +1,9 @@
 import { LoaderFunction, redirect, useLoaderData } from 'remix'
 import { supabaseUser } from '~/cookie'
 import { supabase } from '~/utils/supabase.server'
-import { VFC } from 'react'
+import { useRef, VFC } from 'react'
 import { User } from '@supabase/supabase-js'
+import { useGetPokemonQuery } from '../libs/generated/client'
 
 type Data = {
   googleUrl: string
@@ -14,6 +15,10 @@ export const loader: LoaderFunction = () => {
 
 const Signin: VFC = () => {
   const { googleUrl } = useLoaderData<Data>()
+  const id = useRef(String(Math.floor(Math.random() * 151)))
+  const { data } = useGetPokemonQuery({
+    variables: { id: id.current }
+  })
   return (
     <div
       className="flex items-center justify-center min-h-screen"
@@ -23,6 +28,15 @@ const Signin: VFC = () => {
         <h3 className="text-2xl font-bold text-center block">
           Login to your account
         </h3>
+        <div className="flex justify-center">
+          <img
+            src={data?.pokemon?.sprites.front_default}
+            alt={data?.pokemon?.name}
+            width={96}
+            height={96}
+            loading="lazy"
+          />
+        </div>
         <a href={googleUrl} className="mt-2 mb-8 block">
           <button className="w-full h-10 px-6 text-indigo-100 transition-colors duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800">
             Google

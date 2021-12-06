@@ -16,14 +16,18 @@
     "prisma:seed": "prisma db seed",
     "prisma:build": "prisma generate",
     "build:css": "tailwindcss -o ./app/tailwind.css",
-    "dev:css": "tailwindcss -o ./app/tailwind.css --watch"
+    "dev:css": "tailwindcss -o ./app/tailwind.css --watch",
+    "graphql:generate": "graphql-codegen --config codegen.yml",
+    "graphql:schema": "get-graphql-schema https://workers-graphql-server.aiji422990.workers.dev > schema.graphql"
   },
   "dependencies": {
+    "@apollo/client": "^3.5.5",
     "@geist-ui/react": "^2.2.0",
     "@prisma/client": "3.6.0",
     "@remix-run/cloudflare-workers": "^1.0.6",
     "@remix-run/react": "^1.0.6",
     "@supabase/supabase-js": "^1.28.4",
+    "graphql": "^16.0.1",
     "prisma": "3.6.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -31,6 +35,10 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^3.2.0",
+    "@graphql-codegen/cli": "2.3.0",
+    "@graphql-codegen/typescript": "2.4.1",
+    "@graphql-codegen/typescript-operations": "2.2.1",
+    "@graphql-codegen/typescript-react-apollo": "3.2.2",
     "@remix-run/dev": "^1.0.6",
     "@types/faker": "^5.5.9",
     "@types/react": "^17.0.37",
@@ -39,6 +47,7 @@
     "dotenv": "^10.0.0",
     "esbuild": "^0.14.1",
     "faker": "^5.5.3",
+    "get-graphql-schema": "^2.1.2",
     "miniflare": "2.0.0-next.3",
     "prettier": "^2.5.0",
     "tailwindcss": "^2.2.19",

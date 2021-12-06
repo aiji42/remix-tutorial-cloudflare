@@ -1,6 +1,5 @@
-import React, { VFC } from 'react'
+import React from 'react'
 import {
-  Link,
   Links,
   LiveReload,
   LoaderFunction,
@@ -17,7 +16,8 @@ import { userPrefs } from '~/cookie'
 import styles from '~/tailwind.css'
 import { useLogin } from '~/utils/use-handle-auth'
 import { getUser } from './utils/supabase-user'
-import { User } from '@supabase/gotrue-js'
+import { ApolloProvider } from '@apollo/client'
+import { client } from './utils/apollo-client'
 
 export let links: LinksFunction = () => {
   return [
@@ -30,7 +30,6 @@ export let links: LinksFunction = () => {
 }
 
 type Data = {
-  user: User | null
   isCaching: boolean
 }
 
@@ -45,7 +44,6 @@ export const loader: LoaderFunction = async ({ request, context }) => {
   if (user && path === '/') return redirect('/main/home')
 
   return {
-    user,
     isCaching: !!cookie.cacheable
   }
 }
@@ -88,7 +86,7 @@ function Document({
 }
 
 function Layout({ children }: React.PropsWithChildren<{}>) {
-  const { isCaching, user } = useLoaderData<Data>()
+  const { isCaching } = useLoaderData<Data>()
   const cacheableToggle = async () => {
     document.cookie = await userPrefs.serialize({
       cacheable: !isCaching
@@ -97,8 +95,7 @@ function Layout({ children }: React.PropsWithChildren<{}>) {
   }
   return (
     <div className="bg-black relative">
-      {children}
-      {!user && <Link to="/signin">Sign in</Link>}
+      <ApolloProvider client={client}>{children}</ApolloProvider>
       <button
         onClick={cacheableToggle}
         className="absolute bottom-0 right-0 m-8 rounded-full py-3 px-6 bg-purple-600 text-white"
